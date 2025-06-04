@@ -18,14 +18,14 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         textTheme: TextTheme(
           bodyMedium: TextStyle(
-            color: Colors.black.withOpacity(0.8),
-            // shadows: <Shadow>[
-            //   Shadow(
-            //     offset: Offset(0.0, 0.0),
-            //     blurRadius: 10.0,
-            //     color: Colors.grey,
-            //   ),
-            // ],
+            color: Colors.white.withOpacity(0.8),
+            shadows: <Shadow>[
+              Shadow(
+                offset: Offset(0.0, 0.0),
+                blurRadius: 10.0,
+                color: Colors.grey,
+              ),
+            ],
           ),
         ),
       ),

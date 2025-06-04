@@ -18,8 +18,12 @@ class NextHoursForecastElement extends StatelessWidget {
       child: Column(
         children: [
           Text(time),
-          Image(image: NetworkImage(iconUrl)),
-          Text(temp, style: TextStyle(fontSize: 22),)
+          SizedBox(
+            width: 40,
+            height: 70,
+            child: Image(image: NetworkImage(iconUrl)),
+          ),
+          Text(temp, style: TextStyle(fontSize: 20)),
         ],
       ),
     );
