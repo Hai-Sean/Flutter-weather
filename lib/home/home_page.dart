@@ -43,9 +43,7 @@ class _HomePageState extends State<HomePage> {
       color: Colors.grey.shade500.withOpacity(0.3),
     );
 
-    //MARK: - Handle day/night display
-    var isDay = true;
-
+    var isDay = forecastResponse?.current.isDay == 1;
     var currentLocationName = forecastResponse?.location.name ?? '';
     var currentTemp = '${(forecastResponse?.current.tempC)?.toInt()}°';
     var currentWeatherType =
@@ -61,19 +59,28 @@ class _HomePageState extends State<HomePage> {
     final nextHoursForeCastDesc =
         'Cloudy conditions from 1AM-9AM, with showers expected at 9AM.';
 
+    final twoDayHoursForecastResponse =
+        forecastResponse!.forecast.forecastday.first.hour +
+        forecastResponse!.forecast.forecastday[1].hour;
+
+    final hourInt = int.parse(DateFormat.H().format(DateTime.now()));
+
     List<List<String>> nextHoursForecastData =
-        forecastResponse!.forecast.forecastday.first.hour.map((forecastHour) {
-          final inputDateFormat = new DateFormat('yyyy-MM-dd hh:mm');
+        twoDayHoursForecastResponse
+            .skip(hourInt)
+            .take(24)
+            .map((forecastHour) {
+          final inputDateFormat = DateFormat('yyyy-MM-dd HH:mm');
           final date = inputDateFormat.parse(forecastHour.time ?? '');
-          final hourString = DateFormat.Hm().format(date);
+          final hourString = DateFormat.H().format(date);
           return [
-            hourString,
+            (int.parse(hourString) == hourInt) ? 'Now' : hourString,
             'https:${forecastHour.condition.weatherIcon}',
-            '${forecastHour.tempC}°',
+            '${forecastHour.tempC.toInt()}°',
           ];
         }).toList();
 
-    final tenDaysForecastTitle = '10-DAY  FORECAST';
+    final tenDaysForecastTitle = '10-DAY FORECAST';
 
     List<List<String>> tenDaysForecastData =
         forecastResponse!.forecast.forecastday.map((forecastDay) {
@@ -93,8 +100,8 @@ class _HomePageState extends State<HomePage> {
           final iconUrlString =
               'https:${forecastDay.day.condition.weatherIcon}';
 
-          final minTemp = '${forecastDay.day.mintempC}°';
-          final maxTemp = '${forecastDay.day.maxtempC}°';
+          final minTemp = '${forecastDay.day.mintempC.toInt()}°';
+          final maxTemp = '${forecastDay.day.maxtempC.toInt()}°';
 
           return [dateString, iconUrlString, minTemp, maxTemp];
         }).toList();
