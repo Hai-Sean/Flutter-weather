@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:weather_app/models/forecast_response.dart';
+import 'package:weather_app/models/home_models/home_header_model.dart';
 import 'package:weather_app/services/weather_repo.dart';
 import 'package:intl/intl.dart';
 
+import '../models/home_models/home_next_hours_model.dart';
+import '../models/home_models/home_ten_days_model.dart';
 import 'components/current_temp_header.dart';
 import 'components/next_hours_forecast.dart';
 import 'components/ten_days_forecast.dart';
@@ -56,7 +59,7 @@ class _HomePageState extends State<HomePage> {
         'H:${'$todayMaxTemp°' ?? ''}   L:${'$todayMinTemp°' ?? ''}';
 
     // TODO: - Remove mock forecast desc
-    final nextHoursForeCastDesc =
+    final nextHoursForecastDesc =
         'Cloudy conditions from 1AM-9AM, with showers expected at 9AM.';
 
     final twoDayHoursForecastResponse =
@@ -65,24 +68,21 @@ class _HomePageState extends State<HomePage> {
 
     final hourInt = int.parse(DateFormat.H().format(DateTime.now()));
 
-    List<List<String>> nextHoursForecastData =
-        twoDayHoursForecastResponse
-            .skip(hourInt)
-            .take(24)
-            .map((forecastHour) {
+    List<HomeNextHoursDataModel> nextHoursForecastData =
+        twoDayHoursForecastResponse.skip(hourInt).take(24).map((forecastHour) {
           final inputDateFormat = DateFormat('yyyy-MM-dd HH:mm');
           final date = inputDateFormat.parse(forecastHour.time ?? '');
           final hourString = DateFormat.H().format(date);
-          return [
-            (int.parse(hourString) == hourInt) ? 'Now' : hourString,
-            'https:${forecastHour.condition.weatherIcon}',
-            '${forecastHour.tempC.toInt()}°',
-          ];
+          return HomeNextHoursDataModel(
+            time: (int.parse(hourString) == hourInt) ? 'Now' : hourString,
+            iconUrlString: 'https:${forecastHour.condition.weatherIcon}',
+            temp: '${forecastHour.tempC.toInt()}°',
+          );
         }).toList();
 
     final tenDaysForecastTitle = '10-DAY FORECAST';
 
-    List<List<String>> tenDaysForecastData =
+    List<HomeTenDaysDataModel> tenDaysForecastData =
         forecastResponse!.forecast.forecastday.map((forecastDay) {
           final dateTime = forecastDay.date;
           final now = DateTime.now();
@@ -100,10 +100,12 @@ class _HomePageState extends State<HomePage> {
           final iconUrlString =
               'https:${forecastDay.day.condition.weatherIcon}';
 
-          final minTemp = '${forecastDay.day.mintempC.toInt()}°';
-          final maxTemp = '${forecastDay.day.maxtempC.toInt()}°';
-
-          return [dateString, iconUrlString, minTemp, maxTemp];
+          return HomeTenDaysDataModel(
+            dateString: dateString,
+            iconUrlString: iconUrlString,
+            minTemp: forecastDay.day.mintempC.toInt(),
+            maxTemp: forecastDay.day.maxtempC.toInt(),
+          );
         }).toList();
 
     return Scaffold(
@@ -128,19 +130,25 @@ class _HomePageState extends State<HomePage> {
               children: [
                 SizedBox(height: 34),
                 CurrentTempHeaderView(
-                  currentLocationName: currentLocationName,
-                  currentTemp: currentTemp,
-                  currentWeatherType: currentWeatherType,
-                  currentHighLowTemp: currentHighLowTemp,
+                  model: HomeHeaderModel(
+                    currentLocationName: currentLocationName,
+                    currentTemp: currentTemp,
+                    currentWeatherType: currentWeatherType,
+                    currentHighLowTemp: currentHighLowTemp,
+                  ),
                 ),
                 SizedBox(height: 44),
                 NextHoursForecast(
-                  nextHoursForecastDesc: nextHoursForeCastDesc,
-                  nextHoursForecastData: nextHoursForecastData,
+                  model: HomeNextHoursModel(
+                    nextHoursForecastDesc: nextHoursForecastDesc,
+                    nextHoursForecastData: nextHoursForecastData,
+                  ),
                 ),
                 TenDaysForecast(
-                  tenDaysForecastTitle: tenDaysForecastTitle,
-                  tenDaysForecastData: tenDaysForecastData,
+                  model: HomeTenDaysModel(
+                    tenDaysForecastTitle: tenDaysForecastTitle,
+                    tenDaysForecastData: tenDaysForecastData,
+                  ),
                 ),
               ],
             ),

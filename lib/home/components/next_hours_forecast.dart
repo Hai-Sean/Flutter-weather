@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../models/home_models/home_next_hours_model.dart';
 import 'elements/next_hours_forecast_element.dart';
 
 class NextHoursForecast extends StatelessWidget {
-  const NextHoursForecast({
-    super.key,
-    required this.nextHoursForecastDesc,
-    required this.nextHoursForecastData,
-  });
+  const NextHoursForecast({super.key, required this.model});
 
-  final String nextHoursForecastDesc;
-  final List<List<String>> nextHoursForecastData;
+  final HomeNextHoursModel model;
 
   @override
   Widget build(BuildContext context) {
@@ -23,18 +19,18 @@ class NextHoursForecast extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(nextHoursForecastDesc, textAlign: TextAlign.left),
+          Text(model.nextHoursForecastDesc, textAlign: TextAlign.left),
           Divider(color: Colors.grey.shade500),
           Container(
             margin: EdgeInsets.symmetric(vertical: 12.0),
             height: 120.0,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: nextHoursForecastData.length,
+              itemCount: model.nextHoursForecastData.length,
               itemBuilder: (context, index) {
-                var time = nextHoursForecastData[index][0];
-                var iconUrl = nextHoursForecastData[index][1];
-                var temp = nextHoursForecastData[index][2];
+                var time = model.nextHoursForecastData[index].time;
+                var iconUrl = model.nextHoursForecastData[index].iconUrlString;
+                var temp = model.nextHoursForecastData[index].temp;
                 return SizedBox(
                   height: 110,
                   width: 80,

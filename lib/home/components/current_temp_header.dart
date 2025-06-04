@@ -1,35 +1,28 @@
 import 'package:flutter/material.dart';
 
-class CurrentTempHeaderView extends StatelessWidget {
-  const CurrentTempHeaderView({
-    super.key,
-    required this.currentLocationName,
-    required this.currentTemp,
-    required this.currentWeatherType,
-    required this.currentHighLowTemp,
-  });
+import '../../models/home_models/home_header_model.dart';
 
-  final String currentLocationName;
-  final String currentTemp;
-  final String currentWeatherType;
-  final String currentHighLowTemp;
+class CurrentTempHeaderView extends StatelessWidget {
+  const CurrentTempHeaderView({super.key, required this.model});
+
+  final HomeHeaderModel model;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       child: Column(
         children: [
-          Text(currentLocationName, style: TextStyle(fontSize: 37)),
+          Text(model.currentLocationName, style: TextStyle(fontSize: 37)),
           Text(
-            currentTemp,
+            model.currentTemp,
             style: TextStyle(
               fontSize: 90,
               fontWeight: FontWeight.w200,
               height: 1,
             ),
           ),
-          Text(currentWeatherType, style: TextStyle(fontSize: 24)),
-          Text(currentHighLowTemp, style: TextStyle(fontSize: 21)),
+          Text(model.currentWeatherType, style: TextStyle(fontSize: 24)),
+          Text(model.currentHighLowTemp, style: TextStyle(fontSize: 21)),
         ],
       ),
     );
