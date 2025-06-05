@@ -1,17 +1,19 @@
-import 'dart:math';
 import 'dart:math' as math;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../conditions/conditions_page.dart';
 import '../../models/home_models/home_ten_days_model.dart';
 import 'elements/ten_days_forecast_element.dart';
 
 class TenDaysForecast extends StatelessWidget {
-  const TenDaysForecast({super.key, required this.model});
+  TenDaysForecast({
+    super.key,
+    required this.model,
+    required this.onSelectItem
+  });
 
   final HomeTenDaysModel model;
+  VoidCallback onSelectItem;
 
   int getHighestTemp() {
     final maxTemp =
@@ -35,14 +37,6 @@ class TenDaysForecast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void presentConditionsScreen() {
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-          fullscreenDialog: false,
-          builder: (context) => ConditionsPage(),
-        ),
-      );
-    }
 
     return Container(
       margin: EdgeInsets.all(12.0),
@@ -67,12 +61,12 @@ class TenDaysForecast extends StatelessWidget {
             itemCount: model.tenDaysForecastData.length,
             itemBuilder: (context, index) {
               return GestureDetector(
+                onTap: onSelectItem,
                 child: TenDaysForecastElement(
                   models: model.tenDaysForecastData[index],
                   maxC: getHighestTemp(),
                   minC: getLowestTemp(),
                 ),
-                onTap: () => presentConditionsScreen,
               );
             },
           ),

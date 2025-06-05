@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
-class ConditionsPage extends StatefulWidget {
-  const ConditionsPage({super.key});
+import '../models/forecast_response.dart';
 
-  @override
-  State<ConditionsPage> createState() => _ConditionsPageState();
-}
+class ConditionsPage extends StatelessWidget {
+  ConditionsPage({super.key, required this.response});
 
-class _ConditionsPageState extends State<ConditionsPage> {
+  ForecastResponse? response;
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Text(response?.current.condition.weatherText ?? '');
   }
 }

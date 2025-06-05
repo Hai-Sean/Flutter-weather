@@ -5,6 +5,7 @@ import 'package:weather_app/models/home_models/home_header_model.dart';
 import 'package:weather_app/services/weather_repo.dart';
 import 'package:intl/intl.dart';
 
+import '../conditions/conditions_page.dart';
 import '../models/home_models/home_next_hours_model.dart';
 import '../models/home_models/home_ten_days_model.dart';
 import 'components/current_temp_header.dart';
@@ -20,6 +21,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   ForecastResponse? forecastResponse;
+  final weatherRepo = WeatherRepo();
   var isLoaded = false;
 
   @override
@@ -27,11 +29,12 @@ class _HomePageState extends State<HomePage> {
     super.initState();
 
     // fetch remote data
-    getWeatherForecast();
+    _getWeatherForecast();
   }
 
-  getWeatherForecast() async {
-    forecastResponse = await WeatherRepo().getWeatherForecast();
+  Future<void> _getWeatherForecast() async {
+    isLoaded = false;
+    forecastResponse = await weatherRepo.getWeatherForecast();
     if (forecastResponse != null) {
       setState(() {
         isLoaded = true;
@@ -46,15 +49,18 @@ class _HomePageState extends State<HomePage> {
       color: Colors.grey.shade500.withOpacity(0.3),
     );
 
-    var isDay = forecastResponse?.current.isDay == 1;
+    var isDay = forecastResponse?.current.isDay != 0;
     var currentLocationName = forecastResponse?.location.name ?? '';
-    var currentTemp = '${(forecastResponse?.current.tempC)?.toInt()}°';
+    var currentTemp =
+        forecastResponse?.current.tempC == null
+            ? '--'
+            : '${(forecastResponse?.current.tempC)?.toInt()}°';
     var currentWeatherType =
         forecastResponse?.current.condition.weatherText ?? '';
     var todayMaxTemp =
-        forecastResponse?.forecast.forecastday.first.day.maxtempC;
+        forecastResponse?.forecast.forecastday.first.day.maxtempC.toInt();
     var todayMinTemp =
-        forecastResponse?.forecast.forecastday.first.day.mintempC;
+        forecastResponse?.forecast.forecastday.first.day.mintempC.toInt();
     var currentHighLowTemp =
         'H:${'$todayMaxTemp°' ?? ''}   L:${'$todayMinTemp°' ?? ''}';
 
@@ -63,8 +69,8 @@ class _HomePageState extends State<HomePage> {
         'Cloudy conditions from 1AM-9AM, with showers expected at 9AM.';
 
     final twoDayHoursForecastResponse =
-        forecastResponse!.forecast.forecastday.first.hour +
-        forecastResponse!.forecast.forecastday[1].hour;
+        (forecastResponse?.forecast.forecastday.first.hour ?? []) +
+        (forecastResponse?.forecast.forecastday[1].hour ?? []);
 
     final hourInt = int.parse(DateFormat.H().format(DateTime.now()));
 
@@ -83,7 +89,7 @@ class _HomePageState extends State<HomePage> {
     final tenDaysForecastTitle = '10-DAY FORECAST';
 
     List<HomeTenDaysDataModel> tenDaysForecastData =
-        forecastResponse!.forecast.forecastday.map((forecastDay) {
+        (forecastResponse?.forecast.forecastday ?? []).map((forecastDay) {
           final dateTime = forecastDay.date;
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
@@ -108,6 +114,19 @@ class _HomePageState extends State<HomePage> {
           );
         }).toList();
 
+    void _presentConditionsScreen() {
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          fullscreenDialog: false,
+          builder: (context) => ConditionsPage(response: forecastResponse),
+        ),
+      );
+    }
+
+    Widget loadingView = Center(
+      child: CircularProgressIndicator(color: Colors.white),
+    );
+
     return Scaffold(
       body: Stack(
         children: [
@@ -124,34 +143,75 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Center(
-            child: ListView(
-              physics: ScrollPhysics(),
-              scrollDirection: Axis.vertical,
-              children: [
-                SizedBox(height: 34),
-                CurrentTempHeaderView(
-                  model: HomeHeaderModel(
-                    currentLocationName: currentLocationName,
-                    currentTemp: currentTemp,
-                    currentWeatherType: currentWeatherType,
-                    currentHighLowTemp: currentHighLowTemp,
-                  ),
-                ),
-                SizedBox(height: 44),
-                NextHoursForecast(
-                  model: HomeNextHoursModel(
-                    nextHoursForecastDesc: nextHoursForecastDesc,
-                    nextHoursForecastData: nextHoursForecastData,
-                  ),
-                ),
-                TenDaysForecast(
-                  model: HomeTenDaysModel(
-                    tenDaysForecastTitle: tenDaysForecastTitle,
-                    tenDaysForecastData: tenDaysForecastData,
-                  ),
-                ),
-              ],
-            ),
+            child:
+                !isLoaded
+                    ? loadingView
+                    : _homeContentView(
+                    headerModel: HomeHeaderModel(
+                      currentLocationName: currentLocationName,
+                      currentTemp: currentTemp,
+                      currentWeatherType: currentWeatherType,
+                      currentHighLowTemp: currentHighLowTemp,
+                    ),
+                    nextHoursModel: HomeNextHoursModel(
+                      nextHoursForecastDesc: nextHoursForecastDesc,
+                      nextHoursForecastData: nextHoursForecastData,
+                    ),
+                    tenDaysModel: HomeTenDaysModel(
+                      tenDaysForecastTitle: tenDaysForecastTitle,
+                      tenDaysForecastData: tenDaysForecastData,
+                    ),
+                    onRefresh: _getWeatherForecast,
+                    onTapItem: _presentConditionsScreen
+                )
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _homeContentView extends StatelessWidget {
+  _homeContentView({
+    super.key,
+    required this.headerModel,
+    required this.nextHoursModel,
+    required this.tenDaysModel,
+    required this.onRefresh,
+    required this.onTapItem,
+  });
+
+  HomeHeaderModel headerModel;
+  HomeNextHoursModel nextHoursModel;
+  HomeTenDaysModel tenDaysModel;
+
+  VoidCallback onRefresh;
+  VoidCallback onTapItem;
+
+  Future<void> _onRefresh() async {
+    onRefresh;
+}
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      backgroundColor: Colors.transparent,
+      child: ListView(
+        physics: ScrollPhysics(),
+        scrollDirection: Axis.vertical,
+        children: [
+          SizedBox(height: 34),
+          CurrentTempHeaderView(
+            model: headerModel
+          ),
+          SizedBox(height: 44),
+          NextHoursForecast(
+            model: nextHoursModel,
+          ),
+          TenDaysForecast(
+            model: tenDaysModel,
+            onSelectItem: onTapItem,
           ),
         ],
       ),
