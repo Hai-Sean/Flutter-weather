@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   ForecastResponse? forecastResponse;
   final weatherRepo = WeatherRepo();
   var isLoaded = false;
+  var searchModeOn = false;
 
   @override
   void initState() {
@@ -38,6 +39,8 @@ class _HomePageState extends State<HomePage> {
     if (forecastResponse != null) {
       setState(() {
         isLoaded = true;
+        searchModeOn = false;
+        print('Updated');
       });
     }
   }
@@ -48,6 +51,8 @@ class _HomePageState extends State<HomePage> {
       borderRadius: BorderRadius.circular(12),
       color: Colors.grey.shade500.withOpacity(0.3),
     );
+
+    final controller = TextEditingController();
 
     var isDay = forecastResponse?.current.isDay != 0;
     var currentLocationName = forecastResponse?.location.name ?? '';
@@ -123,6 +128,18 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
+    void _showSearchView() {
+      setState(() {
+        searchModeOn = true;
+      });
+    }
+
+    void _searchTrigger() {
+      print('search triggered');
+      weatherRepo.updateCurrentLocation(controller.text);
+      _getWeatherForecast();
+    }
+
     Widget loadingView = Center(
       child: CircularProgressIndicator(color: Colors.white),
     );
@@ -146,72 +163,85 @@ class _HomePageState extends State<HomePage> {
             child:
                 !isLoaded
                     ? loadingView
-                    : _homeContentView(
-                    headerModel: HomeHeaderModel(
-                      currentLocationName: currentLocationName,
-                      currentTemp: currentTemp,
-                      currentWeatherType: currentWeatherType,
-                      currentHighLowTemp: currentHighLowTemp,
+                    : RefreshIndicator(
+                      onRefresh: _getWeatherForecast,
+                      backgroundColor: Colors.transparent,
+                      child: ListView(
+                        physics: ScrollPhysics(),
+                        scrollDirection: Axis.vertical,
+                        children: [
+                          Container(
+                            alignment: Alignment.centerRight,
+                            padding: EdgeInsets.only(
+                              left: 10,
+                              right: 10,
+                              top: 0,
+                              bottom: 0,
+                            ),
+                            height: 34,
+                            child:
+                                !searchModeOn
+                                    ? IconButton(
+                                      onPressed: _showSearchView,
+                                      icon: Icon(
+                                        Icons.search,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                    : TextField(
+                                      controller: controller,
+                                      textAlignVertical:
+                                          TextAlignVertical.center,
+                                      textInputAction: TextInputAction.search,
+                                      onSubmitted: (value) {
+                                        _searchTrigger;
+                                      },
+                                      decoration: InputDecoration(
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.white.withAlpha(80),
+                                            width: 1.0,
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.white,
+                                            width: 0.0,
+                                          ),
+                                        ),
+                                        labelStyle: TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        contentPadding: EdgeInsets.all(10.0),
+                                        hintText: "Select a new location",
+                                      ),
+                                    ),
+                          ),
+                          CurrentTempHeaderView(
+                            model: HomeHeaderModel(
+                              currentLocationName: currentLocationName,
+                              currentTemp: currentTemp,
+                              currentWeatherType: currentWeatherType,
+                              currentHighLowTemp: currentHighLowTemp,
+                            ),
+                          ),
+                          SizedBox(height: 44),
+                          NextHoursForecast(
+                            model: HomeNextHoursModel(
+                              nextHoursForecastDesc: nextHoursForecastDesc,
+                              nextHoursForecastData: nextHoursForecastData,
+                            ),
+                          ),
+                          TenDaysForecast(
+                            model: HomeTenDaysModel(
+                              tenDaysForecastTitle: tenDaysForecastTitle,
+                              tenDaysForecastData: tenDaysForecastData,
+                            ),
+                            onSelectItem: _presentConditionsScreen,
+                          ),
+                        ],
+                      ),
                     ),
-                    nextHoursModel: HomeNextHoursModel(
-                      nextHoursForecastDesc: nextHoursForecastDesc,
-                      nextHoursForecastData: nextHoursForecastData,
-                    ),
-                    tenDaysModel: HomeTenDaysModel(
-                      tenDaysForecastTitle: tenDaysForecastTitle,
-                      tenDaysForecastData: tenDaysForecastData,
-                    ),
-                    onRefresh: _getWeatherForecast,
-                    onTapItem: _presentConditionsScreen
-                )
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _homeContentView extends StatelessWidget {
-  _homeContentView({
-    super.key,
-    required this.headerModel,
-    required this.nextHoursModel,
-    required this.tenDaysModel,
-    required this.onRefresh,
-    required this.onTapItem,
-  });
-
-  HomeHeaderModel headerModel;
-  HomeNextHoursModel nextHoursModel;
-  HomeTenDaysModel tenDaysModel;
-
-  VoidCallback onRefresh;
-  VoidCallback onTapItem;
-
-  Future<void> _onRefresh() async {
-    onRefresh;
-}
-
-  @override
-  Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _onRefresh,
-      backgroundColor: Colors.transparent,
-      child: ListView(
-        physics: ScrollPhysics(),
-        scrollDirection: Axis.vertical,
-        children: [
-          SizedBox(height: 34),
-          CurrentTempHeaderView(
-            model: headerModel
-          ),
-          SizedBox(height: 44),
-          NextHoursForecast(
-            model: nextHoursModel,
-          ),
-          TenDaysForecast(
-            model: tenDaysModel,
-            onSelectItem: onTapItem,
           ),
         ],
       ),
