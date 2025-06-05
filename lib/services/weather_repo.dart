@@ -13,7 +13,8 @@ class WeatherRepo {
   }
 
   Future<ForecastResponse?>? getWeatherForecast() async {
-    var uri = Uri.parse('https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=$location&days=$numbDays&aqi=no&alerts=no');
+    final urlString = 'https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=$location&days=$numbDays&aqi=no&alerts=no';
+    var uri = Uri.parse(urlString);
     var response = await client.get(uri);
     if (response.statusCode == 200) {
       var json = response.body;
