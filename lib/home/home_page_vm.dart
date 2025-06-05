@@ -23,6 +23,13 @@ class HomePageVM extends ChangeNotifier {
     }
   }
 
+  Future<List<String>> getAutoComplete(String key) async {
+    final cityList = await weatherRepo.getAutoCompleteList(key);
+    notifyListeners();
+    print('$cityList');
+    return cityList;
+  }
+
   bool isDay() {
     return forecastResponse?.current.isDay != 0;
   }

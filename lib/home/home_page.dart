@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/home/home_page_vm.dart';
 
@@ -36,7 +37,6 @@ class _HomePageState extends State<HomePage> {
       if (vm.forecastResponse != null) {
         setState(() {
           searchModeOn = false;
-          print('Loaded');
         });
       }
     }
@@ -58,6 +58,7 @@ class _HomePageState extends State<HomePage> {
 
     void searchTrigger(String value) {
       vm.weatherRepo.updateCurrentLocation(value);
+      controller.text = value;
       getWeatherForecast();
     }
 
@@ -84,36 +85,46 @@ class _HomePageState extends State<HomePage> {
             child:
                 !vm.isLoaded
                     ? loadingView
-                    : RefreshIndicator(
-                      onRefresh: getWeatherForecast,
-                      backgroundColor: Colors.transparent,
-                      child: ListView(
-                        physics: ScrollPhysics(),
-                        scrollDirection: Axis.vertical,
-                        children: [
-                          Container(
-                            alignment: Alignment.centerRight,
-                            padding: EdgeInsets.only(left: 10, right: 10, top: 0, bottom: 0,
+                    : GestureDetector(
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        searchModeOn = false;
+                      },
+                      child: RefreshIndicator(
+                        onRefresh: getWeatherForecast,
+                        backgroundColor: Colors.transparent,
+                        child: ListView(
+                          physics: ScrollPhysics(),
+                          scrollDirection: Axis.vertical,
+                          children: [
+                            Container(
+                              alignment: Alignment.centerRight,
+                              padding: EdgeInsets.only(
+                                left: 10,
+                                right: 10,
+                                top: 0,
+                                bottom: 0,
+                              ),
+                              height: 34,
+                              child:
+                                  !searchModeOn
+                                      ? SearchLocationIcon(
+                                        showSearchView: showSearchView,
+                                      )
+                                      : SearchLocationInput(
+                                        controller: controller,
+                                        searchTrigger: searchTrigger,
+                                      ),
                             ),
-                            height: 34,
-                            child:
-                                !searchModeOn
-                                    ? SearchLocationIcon(
-                                      showSearchView: showSearchView,
-                                    )
-                                    : SearchLocationInput(
-                                      controller: controller,
-                                      searchTrigger: searchTrigger,
-                                    ),
-                          ),
-                          CurrentTempHeaderView(model: vm.getHeaderModel()),
-                          SizedBox(height: 44),
-                          NextHoursForecast(model: vm.getNextHoursModel()),
-                          TenDaysForecast(
-                            model: vm.getTenDaysModel(),
-                            onSelectItem: presentConditionsScreen,
-                          ),
-                        ],
+                            CurrentTempHeaderView(model: vm.getHeaderModel()),
+                            SizedBox(height: 44),
+                            NextHoursForecast(model: vm.getNextHoursModel()),
+                            TenDaysForecast(
+                              model: vm.getTenDaysModel(),
+                              onSelectItem: presentConditionsScreen,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
           ),
@@ -135,23 +146,44 @@ class SearchLocationInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      style: TextStyle(color: Colors.white.withAlpha(200)),
-      controller: controller,
-      textAlignVertical: TextAlignVertical.center,
-      textInputAction: TextInputAction.search,
-      onSubmitted: searchTrigger,
-      decoration: InputDecoration(
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white.withAlpha(80), width: 1.0),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white, width: 0.0),
-        ),
-        labelStyle: TextStyle(color: Colors.white),
-        contentPadding: EdgeInsets.all(10.0),
-        hintText: "Select a new location",
-      ),
+    return TypeAheadField<String>(
+      suggestionsCallback:
+          (search) => Provider.of<HomePageVM>(
+            context,
+            listen: false,
+          ).getAutoComplete(search),
+      builder: (context, controller, focusNode) {
+        return TextField(
+          style: TextStyle(color: Colors.white.withAlpha(200)),
+          controller: controller,
+          textAlignVertical: TextAlignVertical.center,
+          textInputAction: TextInputAction.search,
+          onSubmitted: searchTrigger,
+          focusNode: focusNode,
+          autofocus: true,
+          decoration: InputDecoration(
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: Colors.white.withAlpha(80),
+                width: 1.0,
+              ),
+            ),
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.all(10.0),
+            hintText: "Select a new location",
+            suffixIcon: IconButton(
+              onPressed: controller.clear,
+              icon: Icon(Icons.clear),
+            ),
+          ),
+        );
+      },
+      itemBuilder: (context, city) {
+        return ListTile(title: Text(city));
+      },
+      onSelected: (city) {
+        searchTrigger!(city);
+      },
     );
   }
 }
