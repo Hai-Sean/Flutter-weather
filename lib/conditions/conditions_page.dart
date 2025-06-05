@@ -9,6 +9,21 @@ class ConditionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(response?.current.condition.weatherText ?? '');
+    return Stack(
+      children: [
+        Container(
+          height: double.infinity,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              fit: BoxFit.cover,
+              image: AssetImage('assets/bg_partly_cloud.jpg')
+            ),
+          ),
+        ),
+        Center(
+          child: Text(response?.current.condition.weatherText ?? ''),
+        )
+      ],
+    );
   }
 }

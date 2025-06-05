@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:weather_app/home/home_page_vm.dart';
 import 'package:weather_app/models/forecast_response.dart';
 import 'package:weather_app/models/home_models/home_header_model.dart';
 import 'package:weather_app/services/weather_repo.dart';
@@ -13,7 +14,7 @@ import 'components/next_hours_forecast.dart';
 import 'components/ten_days_forecast.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -21,8 +22,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   ForecastResponse? forecastResponse;
-  final weatherRepo = WeatherRepo();
   var isLoaded = false;
+  var vm = HomePageVM();
   var searchModeOn = false;
 
   @override
@@ -30,28 +31,28 @@ class _HomePageState extends State<HomePage> {
     super.initState();
 
     // fetch remote data
-    _getWeatherForecast();
+    getWeatherForecast();
   }
 
-  Future<void> _getWeatherForecast() async {
-    isLoaded = false;
-    forecastResponse = await weatherRepo.getWeatherForecast();
+  Future<void> getWeatherForecast() async {
+    isLoaded = vm.isLoaded;
+    await vm.getWeatherForecast();
+    forecastResponse = vm.forecastResponse;
     if (forecastResponse != null) {
       setState(() {
-        isLoaded = true;
+        isLoaded = vm.isLoaded;
         searchModeOn = false;
-        print('Updated');
+        print('Loaded');
       });
     }
   }
 
+  ForecastResponse? getResponse() {
+    return forecastResponse;
+  }
+
   @override
   Widget build(BuildContext context) {
-    var comViewDecoration = BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      color: Colors.grey.shade500.withOpacity(0.3),
-    );
-
     final controller = TextEditingController();
 
     var isDay = forecastResponse?.current.isDay != 0;
@@ -119,7 +120,7 @@ class _HomePageState extends State<HomePage> {
           );
         }).toList();
 
-    void _presentConditionsScreen() {
+    void presentConditionsScreen() {
       Navigator.of(context).push(
         CupertinoPageRoute(
           fullscreenDialog: false,
@@ -128,16 +129,15 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    void _showSearchView() {
+    void showSearchView() {
       setState(() {
         searchModeOn = true;
       });
     }
 
-    void _searchTrigger() {
-      print('search triggered');
-      weatherRepo.updateCurrentLocation(controller.text);
-      _getWeatherForecast();
+    void searchTrigger(String value) {
+      vm.weatherRepo.updateCurrentLocation(value);
+      getWeatherForecast();
     }
 
     Widget loadingView = Center(
@@ -164,7 +164,7 @@ class _HomePageState extends State<HomePage> {
                 !isLoaded
                     ? loadingView
                     : RefreshIndicator(
-                      onRefresh: _getWeatherForecast,
+                      onRefresh: getWeatherForecast,
                       backgroundColor: Colors.transparent,
                       child: ListView(
                         physics: ScrollPhysics(),
@@ -182,20 +182,19 @@ class _HomePageState extends State<HomePage> {
                             child:
                                 !searchModeOn
                                     ? IconButton(
-                                      onPressed: _showSearchView,
+                                      onPressed: showSearchView,
                                       icon: Icon(
                                         Icons.search,
                                         color: Colors.white,
                                       ),
                                     )
                                     : TextField(
+                                      style: TextStyle(color: Colors.white.withAlpha(200)),
                                       controller: controller,
                                       textAlignVertical:
                                           TextAlignVertical.center,
                                       textInputAction: TextInputAction.search,
-                                      onSubmitted: (value) {
-                                        _searchTrigger;
-                                      },
+                                      onSubmitted: searchTrigger,
                                       decoration: InputDecoration(
                                         focusedBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
@@ -237,7 +236,7 @@ class _HomePageState extends State<HomePage> {
                               tenDaysForecastTitle: tenDaysForecastTitle,
                               tenDaysForecastData: tenDaysForecastData,
                             ),
-                            onSelectItem: _presentConditionsScreen,
+                            onSelectItem: presentConditionsScreen,
                           ),
                         ],
                       ),
