@@ -20,7 +20,7 @@ class WeatherRepo {
       var json = response.body;
       return forecastResponseFromJson(json);
     } else {
-      return null;
+      throw Exception("Unable to perform request!");
     }
   }
 }

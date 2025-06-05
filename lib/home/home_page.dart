@@ -1,9 +1,7 @@
-import 'dart:ffi';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:weather_app/home/home_page_vm.dart';
-import 'package:weather_app/models/forecast_response.dart';
 
 import '../conditions/conditions_page.dart';
 import 'components/current_temp_header.dart';
@@ -11,7 +9,7 @@ import 'components/next_hours_forecast.dart';
 import 'components/ten_days_forecast.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -19,9 +17,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final controller = TextEditingController();
-  ForecastResponse? forecastResponse;
-  var isLoaded = false;
-  final vm = HomePageVM();
   var searchModeOn = false;
 
   @override
@@ -29,29 +24,28 @@ class _HomePageState extends State<HomePage> {
     super.initState();
 
     // fetch remote data
-    getWeatherForecast();
-  }
-
-  Future<void> getWeatherForecast() async {
-    isLoaded = vm.isLoaded;
-    await vm.getWeatherForecast();
-    forecastResponse = vm.forecastResponse;
-    if (forecastResponse != null) {
-      setState(() {
-        isLoaded = vm.isLoaded;
-        searchModeOn = false;
-        print('Loaded');
-      });
-    }
+    Provider.of<HomePageVM>(context, listen: false).getWeatherForecast();
   }
 
   @override
   Widget build(BuildContext context) {
+    final vm = Provider.of<HomePageVM>(context);
+
+    Future<void> getWeatherForecast() async {
+      await vm.getWeatherForecast();
+      if (vm.forecastResponse != null) {
+        setState(() {
+          searchModeOn = false;
+          print('Loaded');
+        });
+      }
+    }
+
     void presentConditionsScreen() {
       Navigator.of(context).push(
         CupertinoPageRoute(
           fullscreenDialog: false,
-          builder: (context) => ConditionsPage(response: forecastResponse),
+          builder: (context) => ConditionsPage(response: vm.forecastResponse),
         ),
       );
     }
@@ -88,7 +82,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Center(
             child:
-                !isLoaded
+                !vm.isLoaded
                     ? loadingView
                     : RefreshIndicator(
                       onRefresh: getWeatherForecast,
@@ -114,7 +108,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           CurrentTempHeaderView(model: vm.getHeaderModel()),
                           SizedBox(height: 44),
-                          NextHoursForecast(model: vm.getNexthoursModel()),
+                          NextHoursForecast(model: vm.getNextHoursModel()),
                           TenDaysForecast(
                             model: vm.getTenDaysModel(),
                             onSelectItem: presentConditionsScreen,
