@@ -26,7 +26,6 @@ class HomePageVM extends ChangeNotifier {
   Future<List<String>> getAutoComplete(String key) async {
     final cityList = await weatherRepo.getAutoCompleteList(key);
     notifyListeners();
-    print('$cityList');
     return cityList;
   }
 
@@ -61,10 +60,12 @@ class HomePageVM extends ChangeNotifier {
     final nextHoursForecastDesc =
         'Cloudy conditions from 1AM-9AM, with showers expected at 9AM.';
 
+    // 24 + 24 hour, today + tmr
     final twoDayHoursForecastResponse =
         (forecastResponse?.forecast.forecastday.first.hour ?? []) +
             (forecastResponse?.forecast.forecastday[1].hour ?? []);
 
+    // hour now
     final inputDateFormat = DateFormat('yyyy-MM-dd HH:mm');
     final dateNow = inputDateFormat.parse(forecastResponse?.current.lastUpdated ?? '');
     final hourInt = int.parse(DateFormat.H().format(dateNow));

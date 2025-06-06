@@ -1,3 +1,3 @@
 class ApiKeyStorage {
-  final apiKey = 'Your API key';
+  final apiKey = 'cbe29a8a8b4d49de82d44947252705';
 }
